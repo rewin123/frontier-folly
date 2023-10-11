@@ -7,6 +7,7 @@ use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_egui::*;
 use big_space::*;
 
+use frontier_folly::controller::{DebugController, ControllerPlugin};
 use serde::{Deserialize, Serialize};
 
 type SpaceCell = GridCell<i64>;
@@ -23,6 +24,7 @@ fn main() {
         .add_plugins(
             WorldInspectorPlugin::default().run_if(input_toggle_active(true, KeyCode::Tab)),
         )
+        .add_plugins(ControllerPlugin)
         .add_systems(Startup, setup)
         .add_systems(Update, debug_console)
         .run();
@@ -142,10 +144,7 @@ fn setup(
         },
         SpaceCell::default(), // All spatial entities need this component
         FloatingOrigin, // Important: marks this as the entity to use as the floating origin
-        // camera::CameraController::default() // Built-in camera controller
-        //     .with_max_speed(1000.0)
-        //     .with_smoothness(0.95, 0.9)
-        //     .with_speed(1.5),
+        DebugController::default()
     ));
 
     // light
