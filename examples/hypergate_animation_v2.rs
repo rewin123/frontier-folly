@@ -21,7 +21,6 @@ fn main() {
         ))
         .add_systems(PostUpdate, spawn_hypergate)
         .add_systems(PostUpdate, (
-            
             portal_edges.after(bevy::transform::TransformSystem::TransformPropagate),
         ))
         .add_plugins(WorldInspectorPlugin::default())

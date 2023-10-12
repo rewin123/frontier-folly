@@ -7,7 +7,7 @@ use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_egui::*;
 use big_space::*;
 
-use frontier_folly::controller::{DebugController, ControllerPlugin};
+use frontier_folly::controller::{DebugController, ControllerPlugin, OrbitControler};
 use serde::{Deserialize, Serialize};
 
 type SpaceCell = GridCell<i64>;
@@ -25,9 +25,73 @@ fn main() {
             WorldInspectorPlugin::default().run_if(input_toggle_active(true, KeyCode::Tab)),
         )
         .add_plugins(ControllerPlugin)
+        .add_event::<ControllerSwitch>()
         .add_systems(Startup, setup)
-        .add_systems(Update, debug_console)
+        .add_systems(Update, (
+            debug_console,
+            switch_to_ship,
+            switch_to_ship_keymap
+        ))
         .run();
+}
+
+
+#[derive(Component, Reflect)]
+pub struct Ship;
+
+
+#[derive(Event)]
+enum ControllerSwitch {
+    Orbit,
+    Debug,
+}
+
+fn switch_to_ship_keymap(
+    keys : Res<Input<KeyCode>>,
+    mut events : EventWriter<ControllerSwitch>,
+) {
+    if keys.just_pressed(KeyCode::Space) {
+        events.send(ControllerSwitch::Orbit);
+
+    }
+    if keys.just_pressed(KeyCode::D) {
+        events.send(ControllerSwitch::Debug);
+    }
+}
+
+fn switch_to_ship(
+    mut commands: Commands,
+    assets : Res<AssetServer>,
+    query : Query<(Entity, &SpaceCell, &Transform), With<Camera>>,
+    mut events : EventReader<ControllerSwitch>
+) {
+    for event in events.iter() {
+        match event {
+            ControllerSwitch::Orbit => {
+                let (camera, camera_cell, camera_transform) = query.single();
+                let ship = commands.spawn((SceneBundle {
+                        scene: assets.load("low_poly_fighter.glb#Scene0"),
+                        transform: camera_transform.clone(),
+                        ..default()
+                    },
+                    camera_cell.clone(),
+                    Name::new("Ship"),
+                    Ship
+                )).id();
+                commands.entity(camera)
+                    .remove::<DebugController>()
+                    .remove::<Ship>()
+                    .insert(OrbitControler {
+                        target : Some(ship),
+                        ..default()
+                    }).insert(Transform::from_translation(camera_transform.translation + Vec3::splat(2.5)));
+            },
+            ControllerSwitch::Debug => {
+                let (camera, camera_cell, camera_transform) = query.single();
+                commands.entity(camera).remove::<OrbitControler>().insert(DebugController::default());
+            }
+        }
+    }
 }
 
 const GLOBAL_SCALE : f32 = 1.0;
@@ -144,7 +208,8 @@ fn setup(
         },
         SpaceCell::default(), // All spatial entities need this component
         FloatingOrigin, // Important: marks this as the entity to use as the floating origin
-        DebugController::default()
+        DebugController::default(),
+        Ship
     ));
 
     // light
@@ -212,7 +277,7 @@ fn spawn_celestial(
 fn debug_console(
     mut ctxs : Query<&mut EguiContext>,
     celestials : Query<(&SpaceCell, &Transform, &Name), With<Celestial>>,
-    mut player : Query<(&mut SpaceCell, &mut Transform), (With<FloatingOrigin>, Without<Celestial>)>
+    mut player : Query<(&mut SpaceCell, &mut Transform), (With<Ship>, Without<Celestial>)>
 ) {
     egui::SidePanel::right("console").show(ctxs.single_mut().get_mut(), |ui| {
         let (mut player_grid, mut player_transform) = player.single_mut();
