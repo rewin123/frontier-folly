@@ -7,7 +7,7 @@ use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_egui::*;
 use big_space::*;
 
-use frontier_folly::controller::{DebugController, ControllerPlugin, OrbitControler};
+use frontier_folly::{controller::{DebugController, ControllerPlugin, OrbitControler}, object::small_hypergate::SmallHypergatePlugin};
 use serde::{Deserialize, Serialize};
 
 type SpaceCell = GridCell<i64>;
@@ -25,6 +25,7 @@ fn main() {
             WorldInspectorPlugin::default().run_if(input_toggle_active(true, KeyCode::Tab)),
         )
         .add_plugins(ControllerPlugin)
+        .add_plugins(SmallHypergatePlugin)
         .add_event::<ControllerSwitch>()
         .add_systems(Startup, setup)
         .add_systems(Update, (
@@ -287,6 +288,10 @@ fn debug_console(
     mut player : Query<(&mut SpaceCell, &mut Transform), (With<Ship>, Without<Celestial>)>
 ) {
     egui::SidePanel::right("console").show(ctxs.single_mut().get_mut(), |ui| {
+        if ui.button("Spawn hypergate").clicked() {
+            
+        }
+
         let (mut player_grid, mut player_transform) = player.single_mut();
         for (grid, transform, name) in celestials.iter() {
             if ui.button(format!("Go to {}", name)).clicked() {

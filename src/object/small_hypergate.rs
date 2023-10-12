@@ -12,6 +12,24 @@ const GATE_SPAWN_DIST : f32 = 5.0;
 const GATE_CHARGE_TIME : f32 = 2.0;
 const BEAM_COLOR : Color = Color::rgb(217.0 / 255.0 * 10.0,0.0,91.0 / 255.0 * 10.0);
 
+
+pub struct SmallHypergatePlugin;
+
+impl Plugin for SmallHypergatePlugin {
+    fn build(&self, app: &mut App) {
+
+        if !app.is_plugin_added::<TweeningPlugin>() {
+            app.add_plugins(TweeningPlugin);
+        }
+
+        app.add_event::<CreateSmallHypergate>()
+            .add_systems(PostUpdate, spawn_hypergate)
+            .add_systems(PostUpdate, (
+                portal_edges.after(bevy::transform::TransformSystem::TransformPropagate),
+            ));
+    }
+}
+
 #[derive(Component)]
 struct SmallHypergate {
     builders : Vec<Entity>,
@@ -55,7 +73,16 @@ fn spawn_hypergate(
     mut meshes : ResMut<Assets<Mesh>>,
     mut materials : ResMut<Assets<StandardMaterial>>,
 ) {
-    for _ in input.iter() {
+    for params in input.iter() {
+
+        //create parent for animation
+        let parent = commands.spawn(
+            big_space::FloatingSpatialBundle {
+                transform : params.spawn_transform.clone(),
+                grid_position : params.spawn_cell,
+                ..default()
+        }).id();
+
         let mesh = meshes.add(shape::Box::new(0.1, 0.1, 0.1).into());
         let mat = materials.add(StandardMaterial {
             base_color : Color::GRAY,
@@ -212,5 +239,6 @@ fn spawn_hypergate(
             spawned : false
         })
         .insert(Animator::new(seq));
+        commands.entity(parent).add_child(gate);
     }
 }
