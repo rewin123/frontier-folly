@@ -184,11 +184,11 @@ fn setup_ship(
     mut commands: Commands,
     assets : Res<AssetServer>,
 ) {
-    commands.spawn(
-        SceneBundle {
-            scene: assets.load("low_poly_fighter.glb#Scene0"),
-            ..default()
-        });
+    // commands.spawn(
+    //     SceneBundle {
+    //         scene: assets.load("low_poly_fighter.glb#Scene0"),
+    //         ..default()
+    //     });
 }
 
 fn camera_setup(
