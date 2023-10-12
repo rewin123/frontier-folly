@@ -63,6 +63,7 @@ fn switch_to_ship(
     mut commands: Commands,
     assets : Res<AssetServer>,
     query : Query<(Entity, &SpaceCell, &Transform), With<Camera>>,
+    ship_query : Query<Entity, With<Ship>>,
     mut events : EventReader<ControllerSwitch>
 ) {
     for event in events.iter() {
@@ -87,8 +88,14 @@ fn switch_to_ship(
                     }).insert(Transform::from_translation(camera_transform.translation + Vec3::splat(2.5)));
             },
             ControllerSwitch::Debug => {
+                commands.entity(ship_query.single()).despawn_recursive();
                 let (camera, camera_cell, camera_transform) = query.single();
-                commands.entity(camera).remove::<OrbitControler>().insert(DebugController::default());
+                commands.entity(camera)
+                    .remove::<OrbitControler>()
+                    .insert((
+                        DebugController::default(),
+                        Ship
+                    ));
             }
         }
     }
