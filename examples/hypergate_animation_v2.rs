@@ -8,9 +8,9 @@ use bevy_tweening::{lens::*, *};
 const GATE_BUILDER_COUNT : usize = 6;
 const GATE_RADIUS : f32 = 10.0;
 const GATE_BUILDER_SPEED : f32 = 2.0;
-const GATE_SPAWN_DIST : f32 = 10.0;
+const GATE_SPAWN_DIST : f32 = 5.0;
 const GATE_CHARGE_TIME : f32 = 2.0;
-const BEAM_COLOR : Color = Color::rgb(0.0, 10.0, 0.0);
+const BEAM_COLOR : Color = Color::rgb(217.0 / 255.0 * 10.0,0.0,91.0 / 255.0 * 10.0);
 
 fn main() {
     App::new()
@@ -20,9 +20,9 @@ fn main() {
             setup_ship
         ))
         .add_systems(PostUpdate, spawn_hypergate)
-        .add_systems(Update, (
+        .add_systems(PostUpdate, (
             
-            portal_edges,
+            portal_edges.after(bevy::transform::TransformSystem::TransformPropagate),
         ))
         .add_plugins(WorldInspectorPlugin::default())
         .add_systems(Update, bevy::window::close_on_esc)
@@ -78,9 +78,10 @@ fn spawn_hypergate(
 
         let gate = commands.spawn(SpatialBundle::default()).id();
 
-        let base_dur = 5.0;
+        let base_dur = 2.5;
         let pre_open_dur = base_dur / 2.0;
-        let rotate_speed = 1.0;
+        let rotate_speed = 2.0;
+        let pre_open_rotate = rotate_speed * std::f32::consts::PI * pre_open_dur;
 
         //gate center animation
         let seq = Sequence::new([
@@ -90,35 +91,62 @@ fn spawn_hypergate(
                     Duration::from_secs_f32(pre_open_dur),
                     TransformPositionLens {
                         start : Vec3::ZERO,
-                        end : Vec3::new(0.0, 0.0, -GATE_SPAWN_DIST)
+                        end : Vec3::new(0.0, 0.0, -GATE_SPAWN_DIST * 2.0)
                     }
                 ),
                 Tween::new( //rotate
-                    EaseFunction::QuadraticInOut,
+                    EaseFunction::QuadraticIn,
                     Duration::from_secs_f32(pre_open_dur),
                     TransformRotateAxisLens {
                         axis: Vec3::Z,
                         start: 0.0,
-                        end: rotate_speed * std::f32::consts::PI * pre_open_dur,
+                        end: pre_open_rotate,
                 })
             ]),
             Tracks::new([Tween::new( //move backward
                     EaseFunction::QuadraticInOut,
                     Duration::from_secs_f32(base_dur),
                     TransformPositionLens {
-                        start : Vec3::new(0.0, 0.0, -GATE_SPAWN_DIST),
+                        start : Vec3::new(0.0, 0.0, -GATE_SPAWN_DIST * 2.0),
                         end : Vec3::new(0.0, 0.0, GATE_SPAWN_DIST)
                     }
                 ),
                 Tween::new( //rotate
-                    EaseFunction::QuadraticInOut,
+                    EaseFunction::QuadraticOut,
                     Duration::from_secs_f32(base_dur),
                     TransformRotateAxisLens {
                         axis: Vec3::Z,
-                        start: 0.0,
-                        end: rotate_speed * std::f32::consts::PI * base_dur,
+                        start: pre_open_rotate,
+                        end: pre_open_rotate + rotate_speed * std::f32::consts::PI * base_dur,
                 })
             ])
+        ]);
+
+        let scale_seq = Sequence::new([
+            Tween::new(
+                EaseFunction::QuadraticInOut,
+                Duration::from_secs_f32(pre_open_dur),
+                TransformScaleLens {
+                    start : Vec3::splat(0.2),
+                    end : Vec3::splat(GATE_RADIUS * 0.25 * 0.2)
+                }
+            ),
+            Tween::new(
+                EaseFunction::QuadraticInOut,
+                Duration::from_secs_f32(base_dur / 2.0),
+                TransformScaleLens {
+                    start : Vec3::splat(GATE_RADIUS * 0.25 * 0.2),
+                    end : Vec3::splat(GATE_RADIUS * 0.2)
+                }
+            ),
+            Tween::new(
+                EaseFunction::QuadraticInOut,
+                Duration::from_secs_f32(base_dur / 2.0),
+                TransformScaleLens {
+                    start : Vec3::splat(GATE_RADIUS * 0.2),
+                    end : Vec3::splat(0.2)
+                }
+            )
         ]);
 
         let gate_position = Vec3::new(0.0, 0.0, 0.0);
@@ -134,12 +162,19 @@ fn spawn_hypergate(
 
             let seq = Sequence::new(
                 [
-                    BoxedTweenable::from(bevy_tweening::Delay::new(Duration::from_secs_f32(pre_open_dur))),
+                    BoxedTweenable::from(Tween::new(
+                        EaseFunction::QuadraticInOut,
+                        Duration::from_secs_f32(pre_open_dur),
+                        TransformPositionLens {
+                            start : target.clone(),
+                            end : target * GATE_RADIUS * 0.25
+                        }
+                    )),
                     BoxedTweenable::from(Tween::new(
                         EaseFunction::QuadraticInOut,
                         Duration::from_secs_f32(base_dur / 2.0),
                         TransformPositionLens {
-                            start : target.clone(),
+                            start : target * GATE_RADIUS * 0.25,
                             end : target * GATE_RADIUS
                         }
                     )),
@@ -170,6 +205,21 @@ fn spawn_hypergate(
                     Animator::new(seq)))
                 .set_parent(gate);
         }
+
+        //spawn gate mesh
+        commands.spawn((
+            PbrBundle {
+                mesh : meshes.add(shape::RegularPolygon::new(1.0, GATE_BUILDER_COUNT).into()),
+                material : materials.add(StandardMaterial {
+                    base_color : Color::BLACK,
+                    emissive : BEAM_COLOR,
+                    ..default()
+                }),
+                transform : Transform::from_xyz(0.0, 0.0, -0.01),
+                ..default()
+            },
+            Animator::new(scale_seq),
+        )).set_parent(gate);
 
         commands.entity(gate).insert(Hypergate {
             builders : entities,

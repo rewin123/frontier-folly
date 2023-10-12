@@ -8,6 +8,7 @@ fn main() {
         .add_plugins(DefaultPlugins.build())
         .add_systems(Startup, setup)
         .add_systems(Update, draw_lasers)
+        
         .insert_resource(ClearColor(Color::BLACK))
         .run();
 }
