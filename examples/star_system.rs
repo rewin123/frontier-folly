@@ -7,7 +7,7 @@ use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_egui::*;
 use big_space::*;
 
-use frontier_folly::{controller::{DebugController, ControllerPlugin, OrbitControler}, object::small_hypergate::SmallHypergatePlugin};
+use frontier_folly::{controller::{DebugController, ControllerPlugin, OrbitControler}, object::small_hypergate::{SmallHypergatePlugin, CreateSmallHypergate}};
 use serde::{Deserialize, Serialize};
 
 type SpaceCell = GridCell<i64>;
@@ -285,14 +285,19 @@ fn spawn_celestial(
 fn debug_console(
     mut ctxs : Query<&mut EguiContext>,
     celestials : Query<(&SpaceCell, &Transform, &Name), With<Celestial>>,
-    mut player : Query<(&mut SpaceCell, &mut Transform), (With<Ship>, Without<Celestial>)>
+    mut player : Query<(&mut SpaceCell, &mut Transform), (With<Ship>, Without<Celestial>)>,
+    mut create_hypergate : EventWriter<CreateSmallHypergate>
 ) {
     egui::SidePanel::right("console").show(ctxs.single_mut().get_mut(), |ui| {
+        let (mut player_grid, mut player_transform) = player.single_mut();
+
         if ui.button("Spawn hypergate").clicked() {
-            
+            create_hypergate.send(CreateSmallHypergate {
+                spawn_cell: player_grid.clone(),
+                spawn_transform: player_transform.clone(),
+            });
         }
 
-        let (mut player_grid, mut player_transform) = player.single_mut();
         for (grid, transform, name) in celestials.iter() {
             if ui.button(format!("Go to {}", name)).clicked() {
                 *player_grid = *grid;

@@ -38,8 +38,8 @@ struct SmallHypergate {
 
 #[derive(Event)]
 pub struct CreateSmallHypergate {
-    spawn_cell : SpaceCell,
-    spawn_transform : Transform
+    pub spawn_cell : SpaceCell,
+    pub spawn_transform : Transform
 }
 
 #[derive(Component)]
