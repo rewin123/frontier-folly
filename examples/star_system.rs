@@ -7,7 +7,7 @@ use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_egui::*;
 use big_space::*;
 
-use frontier_folly::{controller::{DebugController, ControllerPlugin, OrbitControler}, object::small_hypergate::{SmallHypergatePlugin, CreateSmallHypergate}};
+use frontier_folly::{controller::{DebugController, ControllerPlugin, OrbitControler}, object::small_hypergate::{SmallHypergatePlugin, CreateSmallHypergate, SmallHypergate}};
 use serde::{Deserialize, Serialize};
 
 type SpaceCell = GridCell<i64>;
@@ -31,7 +31,8 @@ fn main() {
         .add_systems(Update, (
             debug_console,
             switch_to_ship,
-            switch_to_ship_keymap
+            switch_to_ship_keymap,
+            hypergate_jump_system
         ))
         .run();
 }
@@ -291,19 +292,15 @@ fn debug_console(
     egui::SidePanel::right("console").show(ctxs.single_mut().get_mut(), |ui| {
         let (mut player_grid, mut player_transform) = player.single_mut();
 
-        if ui.button("Spawn hypergate").clicked() {
-            create_hypergate.send(CreateSmallHypergate {
-                spawn_cell: player_grid.clone(),
-                spawn_transform: player_transform.clone(),
-            });
-        }
-
         for (grid, transform, name) in celestials.iter() {
             if ui.button(format!("Go to {}", name)).clicked() {
-                *player_grid = *grid;
 
-                player_transform.translation = transform.translation + Vec3::splat(transform.scale.x) * 2.0;
-                player_transform.look_at(transform.translation, Vec3::Y);
+                create_hypergate.send(CreateSmallHypergate {
+                    spawn_cell: player_grid.clone(),
+                    spawn_transform: player_transform.clone(),
+                    target_cell: *grid,
+                    target_transform: Transform::from_translation(transform.translation + Vec3::splat(transform.scale.x) * 2.0).looking_at(transform.translation, Vec3::Y)
+                });
             }    
         }
     });
@@ -319,4 +316,20 @@ struct CelestialBody {
     pub distance : f32,
     pub children : Vec<CelestialBody>,
     pub surface_texture : Option<String>
+}
+
+fn hypergate_jump_system(
+    mut ships : Query<(&GlobalTransform, &mut SpaceCell, &mut Transform), (With<Ship>, Without<SmallHypergate>)>,
+    mut hypergates : Query<(&GlobalTransform, &SmallHypergate)>
+) {
+    for (global_transform, mut ship_cell, mut ship_transform) in ships.iter_mut() {
+        for (hypergate_global_transform, hypergate) in hypergates.iter() {
+            if hypergate.opened {
+                if global_transform.translation().distance(hypergate_global_transform.translation()) < 1.0 {
+                    *ship_cell = hypergate.target_cell;
+                    *ship_transform = hypergate.target_transform;
+                }
+            }
+        }
+    }
 }

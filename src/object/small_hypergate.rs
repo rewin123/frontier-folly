@@ -7,9 +7,8 @@ use crate::position::{SpacePosition, SpaceCell};
 
 const GATE_BUILDER_COUNT : usize = 6;
 const GATE_RADIUS : f32 = 10.0;
-const GATE_BUILDER_SPEED : f32 = 2.0;
 const GATE_SPAWN_DIST : f32 = 5.0;
-const GATE_CHARGE_TIME : f32 = 2.0;
+const GATE_BASE_TIME : f32 = 2.5;
 const BEAM_COLOR : Color = Color::rgb(217.0 / 255.0 * 10.0,0.0,91.0 / 255.0 * 10.0);
 
 
@@ -26,20 +25,27 @@ impl Plugin for SmallHypergatePlugin {
             .add_systems(PostUpdate, spawn_hypergate)
             .add_systems(PostUpdate, (
                 portal_edges.after(bevy::transform::TransformSystem::TransformPropagate),
+                small_hypergate_time_system
             ));
     }
 }
 
 #[derive(Component)]
-struct SmallHypergate {
+pub struct SmallHypergate {
     builders : Vec<Entity>,
-    spawned : bool,
+    event_sended : bool,
+    start_time : Duration,
+    pub target_cell : SpaceCell,
+    pub target_transform : Transform,
+    pub opened : bool
 }
 
 #[derive(Event)]
 pub struct CreateSmallHypergate {
     pub spawn_cell : SpaceCell,
-    pub spawn_transform : Transform
+    pub spawn_transform : Transform,
+    pub target_cell : SpaceCell,
+    pub target_transform : Transform
 }
 
 #[derive(Component)]
@@ -72,6 +78,7 @@ fn spawn_hypergate(
     mut input : EventReader<CreateSmallHypergate>,
     mut meshes : ResMut<Assets<Mesh>>,
     mut materials : ResMut<Assets<StandardMaterial>>,
+    mut time : Res<Time>
 ) {
     for params in input.iter() {
 
@@ -91,7 +98,7 @@ fn spawn_hypergate(
 
         let gate = commands.spawn(SpatialBundle::default()).id();
 
-        let base_dur = 2.5;
+        let base_dur = GATE_BASE_TIME;
         let pre_open_dur = base_dur / 2.0;
         let rotate_speed = 2.0;
         let pre_open_rotate = rotate_speed * std::f32::consts::PI * pre_open_dur;
@@ -236,9 +243,29 @@ fn spawn_hypergate(
 
         commands.entity(gate).insert(SmallHypergate {
             builders : entities,
-            spawned : false
+            event_sended : false,
+            start_time : time.elapsed(),
+            target_cell : params.target_cell,
+            target_transform : params.target_transform,
+            opened : false
         })
         .insert(Animator::new(seq));
         commands.entity(parent).add_child(gate);
+    }
+}
+
+fn small_hypergate_time_system(
+    mut commands: Commands,
+    mut query : Query<(Entity, &mut SmallHypergate)>,
+    time : Res<Time>,
+) {
+    for (entity, mut hypergate) in query.iter_mut() {
+        let dt = time.elapsed() - hypergate.start_time;
+        if dt >= Duration::from_secs_f32(GATE_BASE_TIME * 1.5) {
+            commands.entity(entity).despawn_recursive();
+        }
+        if dt >= Duration::from_secs_f32(GATE_BASE_TIME * 0.5) {
+            hypergate.opened = true;
+        }
     }
 }
