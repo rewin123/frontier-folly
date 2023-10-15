@@ -25,9 +25,15 @@ impl Plugin for SmallHypergatePlugin {
             .add_systems(PostUpdate, spawn_hypergate)
             .add_systems(PostUpdate, (
                 portal_edges.after(bevy::transform::TransformSystem::TransformPropagate),
-                small_hypergate_time_system
+                small_hypergate_time_system,
+                small_hypergate_output
             ));
     }
+}
+
+#[derive(Component)]
+struct HypergateOutput {
+    pub start_time : Duration
 }
 
 #[derive(Component)]
@@ -78,6 +84,7 @@ fn spawn_hypergate(
     mut input : EventReader<CreateSmallHypergate>,
     mut meshes : ResMut<Assets<Mesh>>,
     mut materials : ResMut<Assets<StandardMaterial>>,
+    assets : Res<AssetServer>,
     mut time : Res<Time>
 ) {
     for params in input.iter() {
@@ -251,6 +258,20 @@ fn spawn_hypergate(
         })
         .insert(Animator::new(seq));
         commands.entity(parent).add_child(gate);
+
+        //spawn hypergate output
+        commands.spawn((
+            SceneBundle {
+                scene : assets.load("hypergate_out.glb#Scene0"),
+                transform : Transform::from_translation(params.target_transform.translation - Vec3::new(10.0, 0.0, 0.0)).looking_at(params.target_transform.translation, Vec3::Y),
+                ..default()
+            },
+            params.target_cell.clone(),
+            Name::new("hypergate_output".to_string()),
+            HypergateOutput {
+                start_time : time.elapsed()
+            }
+        ));
     }
 }
 
@@ -266,6 +287,19 @@ fn small_hypergate_time_system(
         }
         if dt >= Duration::from_secs_f32(GATE_BASE_TIME * 0.5) {
             hypergate.opened = true;
+        }
+    }
+}
+
+fn small_hypergate_output(
+    mut commands: Commands,
+    mut query : Query<(Entity, &mut HypergateOutput)>,
+    time : Res<Time>,
+) {
+    for (entity, output) in query.iter_mut() {
+        let dt = time.elapsed() - output.start_time;
+        if dt >= Duration::from_secs_f32(GATE_BASE_TIME * 3.0) {
+            commands.entity(entity).despawn_recursive();
         }
     }
 }
