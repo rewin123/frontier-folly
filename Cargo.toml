@@ -22,3 +22,4 @@ rand = "0.8.5"
 ron = "0.8.1"
 serde = { version = "1.0.188", features = ["derive"] }
 space_editor = {git = "https://github.com/rewin123/space_editor.git"}
+bevy_xpbd_3d = {git = "https://github.com/Jondolf/bevy_xpbd.git", default-features = false, features = ["3d", "f64"]}

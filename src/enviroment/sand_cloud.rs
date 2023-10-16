@@ -36,8 +36,8 @@ pub struct SandCloudGlobal {
 impl Default for SandCloudSpawner {
     fn default() -> Self {
         Self { 
-            density: 0.01,
-            radius: 20.0,
+            density: 0.0001,
+            radius: 160.0,
             check_distance_patience: 1.0,
         }
     }
@@ -48,9 +48,10 @@ fn setup_global(
     mut meshes : ResMut<Assets<Mesh>>,
     mut materials : ResMut<Assets<StandardMaterial>>,
 ) {
-    let grain_mesh = meshes.add(Mesh::from(shape::Cube { size: 0.01 }));
+    let grain_mesh = meshes.add(Mesh::from(shape::Cube { size: 0.1 }));
     let grain_material = materials.add(StandardMaterial {
         base_color: Color::rgb(0.8, 0.7, 0.6),
+        emissive: Color::rgb(0.8, 0.7, 0.6),
         ..default()
     });
     commands.insert_resource(SandCloudGlobal {
@@ -61,11 +62,11 @@ fn setup_global(
 
 fn sand_cloud_update(
     mut commands : Commands,
-    mut global : ResMut<SandCloudGlobal>,
-    mut grains : Query<(Entity, &GlobalTransform, &SandGrain)>,
+    global : Res<SandCloudGlobal>,
+    grains : Query<(Entity, &GlobalTransform, &SandGrain)>,
     mut spawners : Query<(Entity, &GlobalTransform, &SandCloudSpawner)>,
 ) {
-    let (spawner_entity, spawner_transform, spawner) = spawners.single_mut();
+    let (_, spawner_transform, spawner) = spawners.single_mut();
 
     let mut grain_count = 0;
     //destroy far grains
