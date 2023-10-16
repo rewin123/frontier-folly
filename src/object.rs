@@ -1,6 +1,7 @@
 use bevy::{prelude::*, app::PluginGroupBuilder};
 
 pub mod small_hypergate;
+pub mod ship;
 
 pub struct ObjectPlugins;
 
