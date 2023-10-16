@@ -85,15 +85,16 @@ fn sand_cloud_update(
         let mut rng = rand::thread_rng();
         rng.gen_range(0.0..=1.0);
         for _ in 0..(need_count - grain_count) {          
+            let r = Vec3::new(
+                rng.gen_range(-spawner.radius..=spawner.radius),
+                rng.gen_range(-spawner.radius..=spawner.radius),
+                rng.gen_range(-spawner.radius..=spawner.radius),
+            ).normalize_or_zero() * spawner.radius * 0.9;
             commands.spawn((
                 PbrBundle {
                     mesh: global.grain_mesh.clone(),
                     material: global.grain_material.clone(),
-                    transform: Transform::from_xyz(
-                        rng.gen_range(-spawner.radius..=spawner.radius) + spawner_transform.translation().x,
-                        rng.gen_range(-spawner.radius..=spawner.radius) + spawner_transform.translation().y,
-                        rng.gen_range(-spawner.radius..=spawner.radius) + spawner_transform.translation().z,
-                    ),
+                    transform: Transform::from_translation(spawner_transform.translation() + r),
                     ..default()
                 },
                 SandGrain,
