@@ -36,8 +36,8 @@ pub struct SandCloudGlobal {
 impl Default for SandCloudSpawner {
     fn default() -> Self {
         Self { 
-            density: 0.1,
-            radius: 100.0,
+            density: 0.01,
+            radius: 20.0,
             check_distance_patience: 1.0,
         }
     }
