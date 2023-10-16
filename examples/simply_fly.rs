@@ -2,7 +2,7 @@ use bevy::{prelude::*, input::common_conditions::input_toggle_active};
 use bevy_egui::EguiPlugin;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use big_space::FloatingOrigin;
-use frontier_folly::{controller::{ControllerPlugin, OrbitControler}, object::{small_hypergate::SmallHypergatePlugin, ship::Ship}, position::SpaceCell};
+use frontier_folly::{controller::{ControllerPlugin, OrbitControler}, object::{small_hypergate::SmallHypergatePlugin, ship::Ship}, position::SpaceCell, enviroment::sand_cloud::{SandCloudSpawner, SandCloudPlugin}};
 
 fn main() {
     App::new()
@@ -16,6 +16,7 @@ fn main() {
         )
         .add_plugins(ControllerPlugin)
         .add_plugins(SmallHypergatePlugin)
+        .add_plugins(SandCloudPlugin)
         .add_systems(Startup, setup)
         .run();
 }
@@ -32,7 +33,10 @@ fn setup(
         },
         SpaceCell::default(),
         Name::new("Ship"),
-        Ship
+        Ship,
+        SandCloudSpawner {
+            ..default()
+        }
     )).id();
 
     // camera

@@ -1,6 +1,7 @@
 use std::f32::consts::PI;
 
 use bevy::prelude::*;
+use rand::Rng;
 
 pub struct SandCloudPlugin;
 
@@ -35,8 +36,8 @@ pub struct SandCloudGlobal {
 impl Default for SandCloudSpawner {
     fn default() -> Self {
         Self { 
-            density: 1.0,
-            radius: 10.0,
+            density: 0.1,
+            radius: 100.0,
             check_distance_patience: 1.0,
         }
     }
@@ -47,7 +48,7 @@ fn setup_global(
     mut meshes : ResMut<Assets<Mesh>>,
     mut materials : ResMut<Assets<StandardMaterial>>,
 ) {
-    let grain_mesh = meshes.add(Mesh::from(shape::Cube { size: 0.1 }));
+    let grain_mesh = meshes.add(Mesh::from(shape::Cube { size: 0.01 }));
     let grain_material = materials.add(StandardMaterial {
         base_color: Color::rgb(0.8, 0.7, 0.6),
         ..default()
@@ -80,15 +81,17 @@ fn sand_cloud_update(
     let need_count = (spawner.density * spawner_volume) as i32;
 
     if grain_count < need_count {
+        let mut rng = rand::thread_rng();
+        rng.gen_range(0.0..=1.0);
         for _ in 0..(need_count - grain_count) {          
             commands.spawn((
                 PbrBundle {
                     mesh: global.grain_mesh.clone(),
                     material: global.grain_material.clone(),
                     transform: Transform::from_xyz(
-                        rand::gen_range(-spawner.radius, spawner.radius) + spawner_transform.translation().x,
-                        rand::gen_range(-spawner.radius, spawner.radius) + spawner_transform.translation().y,
-                        rand::gen_range(-spawner.radius, spawner.radius) + spawner_transform.translation().z,
+                        rng.gen_range(-spawner.radius..=spawner.radius) + spawner_transform.translation().x,
+                        rng.gen_range(-spawner.radius..=spawner.radius) + spawner_transform.translation().y,
+                        rng.gen_range(-spawner.radius..=spawner.radius) + spawner_transform.translation().z,
                     ),
                     ..default()
                 },
