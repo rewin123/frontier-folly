@@ -3,6 +3,8 @@ use std::f32::consts::PI;
 use bevy::prelude::*;
 use rand::Rng;
 
+use crate::position::SpaceCell;
+
 pub struct SandCloudPlugin;
 
 impl Plugin for SandCloudPlugin {
@@ -64,9 +66,9 @@ fn sand_cloud_update(
     mut commands : Commands,
     global : Res<SandCloudGlobal>,
     grains : Query<(Entity, &GlobalTransform, &SandGrain)>,
-    mut spawners : Query<(Entity, &GlobalTransform, &SandCloudSpawner)>,
+    mut spawners : Query<(Entity, &GlobalTransform, &Transform, &SpaceCell, &SandCloudSpawner)>,
 ) {
-    let (_, spawner_transform, spawner) = spawners.single_mut();
+    let (_, spawner_transform, loc_transform, cell, spawner) = spawners.single_mut();
 
     let mut grain_count = 0;
     //destroy far grains
@@ -94,9 +96,10 @@ fn sand_cloud_update(
                 PbrBundle {
                     mesh: global.grain_mesh.clone(),
                     material: global.grain_material.clone(),
-                    transform: Transform::from_translation(spawner_transform.translation() + r),
+                    transform: Transform::from_translation(loc_transform.translation + r),
                     ..default()
                 },
+                cell.clone(),
                 SandGrain,
             ));
         }
