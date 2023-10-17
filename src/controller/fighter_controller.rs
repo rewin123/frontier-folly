@@ -60,7 +60,8 @@ fn smoother_system(
         parent_smoother.current_target = Some(cur_target);
 
         transform.translation = parent_transform.translation + cur_eye;
-        transform.look_at(parent_transform.translation + cur_target, Vec3::Y);
+        let up: Vec3 = transform.up();
+        transform.look_at(parent_transform.translation + cur_target, up);
     }
 }
 
@@ -141,7 +142,7 @@ fn fighter_controller_system(
         return;
     };
 
-    smoother.target = ship_transform.up() * 2.0;
+    smoother.target = smoother.target + (ship_transform.up() * 2.0 - smoother.target) * time.delta_seconds();
 
     for event in events.iter() {
         match event {
@@ -172,5 +173,7 @@ fn fighter_controller_system(
     let ship_frw = ship_transform.forward();
     let new_frw = ship_frw + (dp - ship_frw) * time.delta_seconds() * controller.ship_rotate_sensitivity;
     let ship_pos = ship_transform.translation;
-    ship_transform.look_at(ship_pos + new_frw, Vec3::Y);
+    let ship_up = ship_transform.up();
+    ship_transform.look_at(ship_pos + new_frw, ship_up);
+
 }
