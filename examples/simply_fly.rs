@@ -27,7 +27,9 @@ fn main() {
 
 fn setup(
     mut commands : Commands,
-    assets : Res<AssetServer>
+    assets : Res<AssetServer>,
+    mut meshs : ResMut<Assets<Mesh>>,
+    mut materials : ResMut<Assets<StandardMaterial>>
 ) {
 
     let ship = commands.spawn((SceneBundle {
@@ -79,6 +81,26 @@ fn setup(
         transform : Transform::from_xyz(-5.0, 5.0, -5.0).looking_at(Vec3::ZERO, Vec3::Y),
         ..default()
     },));
+
+    //enviroment sphere
+    commands.spawn((
+        PbrBundle {
+            mesh: meshs.add(shape::UVSphere::default().into()),
+            material : materials.add(StandardMaterial {
+                base_color_texture : Some(assets.load("hdr.png")),
+                unlit : true,
+                double_sided : true,
+                alpha_mode : AlphaMode::Add,
+                // emissive : Color::WHITE,
+                ..default()
+            }),
+            transform : Transform::from_xyz(0.0, 0.0, 0.0).with_scale(Vec3::splat(-1.0e+10)),
+            ..default()
+        },
+        SpaceCell::default(),
+        EnviromentSphere,
+        Name::new("Enviroment Sphere")
+    ));
 }
 
 fn ship_controller(
@@ -121,3 +143,7 @@ fn apply_velocity(mut query: Query<(&mut Transform, &Velocity)>) {
         transform.translation += velocity.0;
     });
 }
+
+#[derive(Component)]
+pub struct EnviromentSphere;
+
