@@ -20,7 +20,8 @@ fn main() {
         .add_systems(Startup, setup)
         .add_systems(Update, (
             apply_velocity,
-            ship_controller
+            ship_controller,
+            enviroment_camera_follow
         ))
         .run();
 }
@@ -147,3 +148,13 @@ fn apply_velocity(mut query: Query<(&mut Transform, &Velocity)>) {
 #[derive(Component)]
 pub struct EnviromentSphere;
 
+fn enviroment_camera_follow(
+    cameras : Query<&GlobalTransform, (With<Camera>, Without<EnviromentSphere>)>,
+    mut env : Query<(&mut Transform, &GlobalTransform), With<EnviromentSphere>>
+) {
+    let cam_pos = cameras.single().translation();
+    for (mut transform, global_transform) in env.iter_mut() {
+        let dp = cam_pos - global_transform.translation();
+        transform.translation += dp;
+    }
+}
