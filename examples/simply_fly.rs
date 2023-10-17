@@ -2,7 +2,7 @@ use bevy::{prelude::*, input::common_conditions::input_toggle_active};
 use bevy_egui::{EguiPlugin, EguiContexts, egui};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use big_space::FloatingOrigin;
-use frontier_folly::{controller::{ControllerPlugin, OrbitControler}, object::{small_hypergate::SmallHypergatePlugin, ship::Ship}, position::SpaceCell, enviroment::sand_cloud::{SandCloudSpawner, SandCloudPlugin}};
+use frontier_folly::{controller::{ControllerPlugin, OrbitControler, FighterControler, ParentSmoother}, object::{small_hypergate::SmallHypergatePlugin, ship::Ship}, position::SpaceCell, enviroment::sand_cloud::{SandCloudSpawner, SandCloudPlugin}};
 
 fn main() {
     App::new()
@@ -63,8 +63,9 @@ fn setup(
         },
         SpaceCell::default(), // All spatial entities need this component
         FloatingOrigin, // Important: marks this as the entity to use as the floating origin
-        OrbitControler {
-            target: Some(ship),
+        FighterControler::default(),
+        ParentSmoother {
+            parent : Some(ship),
             ..default()
         }
     ));
