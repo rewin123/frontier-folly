@@ -30,7 +30,7 @@ impl Default for ParentSmoother {
             parent : None,
             target : Vec3::ZERO,
             eye : Vec3::ONE * 10.0,
-            smoothing_weight: 0.9,
+            smoothing_weight: 0.95,
             current_eye : None,
             current_target : None,
         }
@@ -80,7 +80,7 @@ impl Default for FighterControler {
             enabled: true,
             mouse_rotate_sensitivity: Vec2::splat(0.2),
             transform_sensitivity: 0.1,
-            ship_rotate_sensitivity: 10.0,
+            ship_rotate_sensitivity: 20.0,
         }
     }
 }
@@ -143,6 +143,10 @@ fn fighter_controller_system(
     };
 
     smoother.target = smoother.target + (ship_transform.up() * 2.0 - smoother.target) * time.delta_seconds();
+
+    let up_diff =  ship_transform.up() - transform.up();
+    let up_diff = -up_diff.dot(transform.right());
+    transform.rotate_local_axis(Vec3::Z, up_diff * time.delta_seconds() * 5.0);
 
     for event in events.iter() {
         match event {
