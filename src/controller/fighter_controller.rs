@@ -79,7 +79,7 @@ impl Default for FighterControler {
             enabled: true,
             mouse_rotate_sensitivity: Vec2::splat(0.2),
             transform_sensitivity: 0.1,
-            ship_rotate_sensitivity: 0.1,
+            ship_rotate_sensitivity: 10.0,
         }
     }
 }
@@ -141,25 +141,27 @@ fn fighter_controller_system(
         return;
     };
 
-    smoother.target = Vec3::ZERO;
+    smoother.target = ship_transform.up() * 2.0;
 
     for event in events.iter() {
         match event {
             FighterControlerEvent::Rotate(v) => {
-                let radius: f32 = smoother.eye.length();
+                let mut dp = smoother.eye - smoother.target;
+                let radius: f32 = dp.length();
                 let move_dir = time.delta_seconds() * radius * (transform.right() * v.x + transform.up() * v.y);   
                 
-                smoother.eye += move_dir;
-                smoother.eye = smoother.eye.normalize_or_zero() * radius;
-                info!("eye: {:?}", smoother.eye); 
+                dp += move_dir;
+                dp = dp.normalize_or_zero() * radius;
+                smoother.eye = dp + smoother.target;
             },
             FighterControlerEvent::TranslateEye(v) => {
-                
-                let radius = smoother.eye.length();
+                let mut dp = smoother.eye - smoother.target;
+                let radius: f32 = dp.length();
                 
                 let step = radius * v;
-                let frw = smoother.eye.normalize_or_zero();
-                smoother.eye -= frw * step;
+                let frw = dp.normalize_or_zero();
+                dp -= frw * step;
+                smoother.eye = dp + smoother.target;
             },
         }
     }
@@ -168,8 +170,7 @@ fn fighter_controller_system(
     let dp = smoother.eye - smoother.target;
     let dp = -dp.normalize_or_zero();
     let ship_frw = ship_transform.forward();
-    let new_frw = ship_frw * controller.ship_rotate_sensitivity + dp * (1.0 - controller.ship_rotate_sensitivity);
-    let new_frw = ship_frw + (new_frw - ship_frw) * time.delta_seconds();
+    let new_frw = ship_frw + (dp - ship_frw) * time.delta_seconds() * controller.ship_rotate_sensitivity;
     let ship_pos = ship_transform.translation;
     ship_transform.look_at(ship_pos + new_frw, Vec3::Y);
 }
