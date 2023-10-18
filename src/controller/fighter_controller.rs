@@ -30,7 +30,7 @@ impl Default for ParentSmoother {
             parent : None,
             target : Vec3::ZERO,
             eye : Vec3::ONE * 10.0,
-            smoothing_weight: 0.95,
+            smoothing_weight: 0.98,
             current_eye : None,
             current_target : None,
         }
@@ -89,6 +89,7 @@ impl Default for FighterControler {
 enum FighterControlerEvent {
     Rotate(Vec2),
     TranslateEye(f32),
+    Move(Vec3),
 }
 
 
@@ -116,13 +117,13 @@ fn default_input_map(
         cursor_delta += event.delta;
     }
 
-    events.send(FighterControlerEvent::Rotate(
-        mouse_rotate_sensitivity * Vec2::new(-cursor_delta.x, cursor_delta.y),
-    ));
+    // events.send(FighterControlerEvent::Rotate(
+    //     mouse_rotate_sensitivity * Vec2::new(-cursor_delta.x, cursor_delta.y),
+    // ));
 
-    for event in mouse_wheel.iter() {
-        events.send(FighterControlerEvent::TranslateEye(transform_sensitivity * event.y));
-    }
+    // for event in mouse_wheel.iter() {
+    //     events.send(FighterControlerEvent::TranslateEye(transform_sensitivity * event.y));
+    // }
 }
 
 fn fighter_controller_system(
@@ -167,6 +168,9 @@ fn fighter_controller_system(
                 let frw = dp.normalize_or_zero();
                 dp -= frw * step;
                 smoother.eye = dp + smoother.target;
+            },
+            FighterControlerEvent::Move(mv) => {
+
             },
         }
     }

@@ -4,6 +4,8 @@ use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use big_space::FloatingOrigin;
 use frontier_folly::{controller::{ControllerPlugin, FighterControler, ParentSmoother}, object::{small_hypergate::SmallHypergatePlugin, ship::Ship}, position::SpaceCell, enviroment::sand_cloud::{SandCloudSpawner, SandCloudPlugin}};
 
+const CURSOR_SIZE : f32 = 40.0;
+
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins.build().disable::<TransformPlugin>())
@@ -22,18 +24,70 @@ fn main() {
         .add_systems(Update, (
             apply_velocity,
             ship_controller,
-            enviroment_camera_follow
+            enviroment_camera_follow,
+            cursor_pos_system,
+            update_cursor_visiblity
         ))
         
         .run();
 }
 
+#[derive(Component)]
+pub struct CursorNode;
+
+fn cursor_pos_system(
+    mut cursors : Query<(&mut Style), With<CursorNode>>,
+    q_windows: Query<&Window, With<bevy::window::PrimaryWindow>>
+) {
+    if let Some(position) = q_windows.single().cursor_position() {
+        for mut style in cursors.iter_mut() {
+            println!("Cursor is inside the primary window, at {:?}", position);
+            style.position_type = PositionType::Absolute;
+            style.top = Val::Px(position.y - CURSOR_SIZE / 2.0);
+            style.left = Val::Px(position.x - CURSOR_SIZE / 2.0);
+        }
+    } else {
+        println!("Cursor is not in the game window.");
+    }
+}
+
+
+fn update_cursor_visiblity(
+    mut q_windows: Query<&mut Window, With<bevy::window::PrimaryWindow>>,
+    mut ctxs : EguiContexts
+) {
+    let ctx = ctxs.ctx_mut();
+    let mut visible = false;
+    if ctx.is_pointer_over_area() || ctx.is_using_pointer() {
+        visible = true;
+    } else {
+        visible = false;
+    }
+    for mut window in q_windows.iter_mut() {
+        window.cursor.visible = visible;
+    }
+}
+
+
 fn setup(
     mut commands : Commands,
     assets : Res<AssetServer>,
     mut meshs : ResMut<Assets<Mesh>>,
-    mut materials : ResMut<Assets<StandardMaterial>>
+    mut materials : ResMut<Assets<StandardMaterial>>,
 ) {
+    let cursor_texture = commands.spawn((
+        NodeBundle {
+            style : Style {
+                width : Val::Px(CURSOR_SIZE),
+                height : Val::Px(CURSOR_SIZE),
+                ..default()
+            },
+            background_color : BackgroundColor(Color::WHITE),
+            ..default()
+        },
+        UiImage::new(assets.load("cursor_2.png")),
+        CursorNode
+    ));
 
     let pipe_test = commands.spawn(SceneBundle {
         scene: assets.load("pipe_test.glb#Scene0"),
