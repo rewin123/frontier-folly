@@ -33,6 +33,12 @@ fn setup(
     mut materials : ResMut<Assets<StandardMaterial>>
 ) {
 
+    let pipe_test = commands.spawn(SceneBundle {
+        scene: assets.load("pipe_test.glb#Scene0"),
+        transform: Transform::from_xyz(100.0, 0.0, 0.0).with_scale(Vec3::splat(2.0)),
+        ..default()
+    });
+
     let ship = commands.spawn((SceneBundle {
             scene: assets.load("low_poly_fighter.glb#Scene0"),
             transform: Transform::default(),
