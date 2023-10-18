@@ -2,7 +2,7 @@ use bevy::{prelude::*, input::common_conditions::input_toggle_active};
 use bevy_egui::{EguiPlugin, EguiContexts, egui};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use big_space::FloatingOrigin;
-use frontier_folly::{controller::{ControllerPlugin, OrbitControler, FighterControler, ParentSmoother}, object::{small_hypergate::SmallHypergatePlugin, ship::Ship}, position::SpaceCell, enviroment::sand_cloud::{SandCloudSpawner, SandCloudPlugin}};
+use frontier_folly::{controller::{ControllerPlugin, FighterControler, ParentSmoother}, object::{small_hypergate::SmallHypergatePlugin, ship::Ship}, position::SpaceCell, enviroment::sand_cloud::{SandCloudSpawner, SandCloudPlugin}};
 
 fn main() {
     App::new()
@@ -14,6 +14,7 @@ fn main() {
         .add_plugins(
             WorldInspectorPlugin::default().run_if(input_toggle_active(true, KeyCode::Tab)),
         )
+        .add_plugins(bevy::core_pipeline::experimental::taa::TemporalAntiAliasPlugin)
         .add_plugins(ControllerPlugin)
         .add_plugins(SmallHypergatePlugin)
         .add_plugins(SandCloudPlugin)
@@ -23,6 +24,7 @@ fn main() {
             ship_controller,
             enviroment_camera_follow
         ))
+        
         .run();
 }
 
@@ -76,16 +78,19 @@ fn setup(
         ParentSmoother {
             parent : Some(ship),
             ..default()
-        }
+        },
+        bevy::pbr::ScreenSpaceAmbientOcclusionBundle::default()
     ));
 
     // light
     commands.spawn((DirectionalLightBundle {
         directional_light: DirectionalLight {
             illuminance: 100_000.0,
+            shadows_enabled : true,
             ..default()
         },
         transform : Transform::from_xyz(-5.0, 5.0, -5.0).looking_at(Vec3::ZERO, Vec3::Y),
+        cascade_shadow_config: bevy::pbr::CascadeShadowConfigBuilder { ..default() }.into(),
         ..default()
     },));
 
