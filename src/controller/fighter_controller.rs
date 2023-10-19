@@ -8,7 +8,7 @@ impl Plugin for FighterControllerPlugin {
     fn build(&self, app: &mut App) {
         app.register_type::<FighterControler>()
             .add_event::<FighterControlerEvent>()
-            .add_systems(Update, (default_input_map, fighter_controller_system, smoother_system).chain());
+            .add_systems(PostUpdate, (default_input_map, fighter_controller_system, smoother_system).chain());
     }
 }
 
@@ -72,15 +72,19 @@ pub struct FighterControler {
     pub mouse_rotate_sensitivity: Vec2,
     pub ship_rotate_sensitivity: f32,
     pub transform_sensitivity: f32,
+    pub radius : Option<f32>,
+    pub dp : Option<Vec3>
 }
 
 impl Default for FighterControler {
     fn default() -> Self {
         Self { 
             enabled: true,
-            mouse_rotate_sensitivity: Vec2::splat(0.2),
+            mouse_rotate_sensitivity: Vec2::splat(2.0),
             transform_sensitivity: 0.1,
             ship_rotate_sensitivity: 20.0,
+            radius: None,
+            dp : None
         }
     }
 }
@@ -96,9 +100,9 @@ enum FighterControlerEvent {
 fn default_input_map(
     mut events: EventWriter<FighterControlerEvent>,
     keyboard: Res<Input<KeyCode>>,
-    mut mouse_motion_events: EventReader<MouseMotion>,
     mut mouse_wheel : EventReader<MouseWheel>,
     controllers: Query<&FighterControler>,
+    q_windows: Query<&Window, With<bevy::window::PrimaryWindow>>
 ) {
     // Can only control one camera at a time.
     let controller = if let Some(controller) = controllers.iter().find(|c| c.enabled) {
@@ -112,18 +116,24 @@ fn default_input_map(
         ..
     } = *controller;
 
-    let mut cursor_delta = Vec2::ZERO;
-    for event in mouse_motion_events.iter() {
-        cursor_delta += event.delta;
+    let Ok(window) = q_windows.get_single() else {
+        return;
+    };
+    let window_size = Vec2::new(window.width() as f32, window.height() as f32);
+    let cursor_pos = window.cursor_position().unwrap_or(window_size / 2.0);
+
+    let mut cursor_dp = Vec2::new(window_size.x / 2.0 - cursor_pos.x, cursor_pos.y - window_size.y / 2.0) / window_size * 2.0; 
+    cursor_dp.x = cursor_dp.x * window_size.x / window_size.y;
+    cursor_dp.x = cursor_dp.x.min(1.0).max(-1.0);
+    cursor_dp = cursor_dp * cursor_dp.length();
+
+    events.send(FighterControlerEvent::Rotate(
+        mouse_rotate_sensitivity * cursor_dp,
+    ));
+
+    for event in mouse_wheel.iter() {
+        events.send(FighterControlerEvent::TranslateEye(transform_sensitivity * event.y));
     }
-
-    // events.send(FighterControlerEvent::Rotate(
-    //     mouse_rotate_sensitivity * Vec2::new(-cursor_delta.x, cursor_delta.y),
-    // ));
-
-    // for event in mouse_wheel.iter() {
-    //     events.send(FighterControlerEvent::TranslateEye(transform_sensitivity * event.y));
-    // }
 }
 
 fn fighter_controller_system(
@@ -143,17 +153,26 @@ fn fighter_controller_system(
         return;
     };
 
-    smoother.target = smoother.target + (ship_transform.up() * 2.0 - smoother.target) * time.delta_seconds();
 
     let up_diff =  ship_transform.up() - transform.up();
     let up_diff = -up_diff.dot(transform.right());
     transform.rotate_local_axis(Vec3::Z, up_diff * time.delta_seconds() * 5.0);
 
+    let mut radius = if let Some(r) = controller.radius {
+        r
+    } else {
+        (smoother.eye - smoother.target).length()
+    };
+
+    let mut dp = if let Some(dp) = controller.dp {
+        dp
+    } else {
+        (smoother.eye - smoother.target).normalize_or_zero()
+    };
+
     for event in events.iter() {
         match event {
             FighterControlerEvent::Rotate(v) => {
-                let mut dp = smoother.eye - smoother.target;
-                let radius: f32 = dp.length();
                 let move_dir = time.delta_seconds() * radius * (transform.right() * v.x + transform.up() * v.y);   
                 
                 dp += move_dir;
@@ -161,19 +180,23 @@ fn fighter_controller_system(
                 smoother.eye = dp + smoother.target;
             },
             FighterControlerEvent::TranslateEye(v) => {
-                let mut dp = smoother.eye - smoother.target;
-                let radius: f32 = dp.length();
                 
                 let step = radius * v;
-                let frw = dp.normalize_or_zero();
-                dp -= frw * step;
-                smoother.eye = dp + smoother.target;
+                radius -= step;
+                dp = dp.normalize_or_zero() * radius;
             },
             FighterControlerEvent::Move(mv) => {
 
             },
         }
     }
+
+    controller.dp = Some(dp);
+    controller.radius = Some(radius);
+    smoother.eye = dp + smoother.target;
+
+    
+    smoother.target = smoother.target + (ship_transform.up() * (0.5 + radius * 0.1) - smoother.target) * time.delta_seconds();
 
     //rotate ship to forward
     let dp = smoother.eye - smoother.target;

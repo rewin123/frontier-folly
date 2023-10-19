@@ -41,13 +41,13 @@ fn cursor_pos_system(
 ) {
     if let Some(position) = q_windows.single().cursor_position() {
         for mut style in cursors.iter_mut() {
-            println!("Cursor is inside the primary window, at {:?}", position);
+
             style.position_type = PositionType::Absolute;
             style.top = Val::Px(position.y - CURSOR_SIZE / 2.0);
             style.left = Val::Px(position.x - CURSOR_SIZE / 2.0);
         }
     } else {
-        println!("Cursor is not in the game window.");
+
     }
 }
 
@@ -89,9 +89,31 @@ fn setup(
         CursorNode
     ));
 
+    commands.spawn(NodeBundle {
+        style : Style {
+            width : Val::Percent(100.0),
+            height : Val::Percent(100.0),
+            align_items : AlignItems::Center,
+            justify_content : JustifyContent::Center,
+            ..default()
+        },
+        ..default()
+    }).with_children(|parent| {
+        parent.spawn(NodeBundle {
+            style : Style {
+                width : Val::Px(2.0),
+                height : Val::Px(2.0),
+                ..default()      
+            },
+            background_color : BackgroundColor(Color::rgba(109.0 / 255.0, 188.0 / 255.0, 185.0 / 255.0, 0.5)),
+            ..default()
+        });
+    });
+
+
     let pipe_test = commands.spawn(SceneBundle {
         scene: assets.load("pipe_test.glb#Scene0"),
-        transform: Transform::from_xyz(100.0, 0.0, 0.0).with_scale(Vec3::splat(2.0)),
+        transform: Transform::from_xyz(100.0, 0.0, 0.0).with_scale(Vec3::splat(4.0)),
         ..default()
     });
 
@@ -176,7 +198,7 @@ fn ship_controller(
     mut ctxs : EguiContexts
 ) {
     let acceleration = 1.0;
-    let restriction = 0.5;
+    let restriction = 0.9;
     let dt = time.delta_seconds();
     egui::Window::new("Ship Controller").show(ctxs.ctx_mut(), |ui| {
         ships.for_each_mut(|(mut velocity, transform, ship)| {
