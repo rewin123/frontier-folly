@@ -34,6 +34,7 @@ fn main() {
                 enviroment_camera_follow,
                 cursor_pos_system,
                 update_cursor_visiblity,
+                change_thruster_flames
             ),
         )
         .run();
@@ -234,6 +235,18 @@ fn apply_velocity(mut query: Query<(&mut Transform, &Velocity)>) {
     query.for_each_mut(|(mut transform, velocity)| {
         transform.translation += velocity.0;
     });
+}
+
+fn change_thruster_flames(
+    mut flames : Query<&mut frontier_folly::object::thruster_flame::ThrusterFlame>,
+    mut query: Query<(&mut Transform, &Velocity)>
+) {
+    let (_, vel) = query.single();
+
+    let vel_length = vel.0.length();
+    for mut flame in flames.iter_mut() {
+        flame.length = vel_length;
+    }
 }
 
 #[derive(Component)]
