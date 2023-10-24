@@ -1,0 +1,232 @@
+(
+  resources: {},
+  entities: {
+    7: (
+      components: {
+        "bevy_transform::components::transform::Transform": (
+          translation: (
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+          ),
+          rotation: (0.0, -0.70710665, 0.0, 0.7071069),
+          scale: (
+            x: 0.99999475,
+            y: 1.0,
+            z: 0.99999475,
+          ),
+        ),
+        "bevy_render::view::visibility::Visibility": Inherited,
+        "space_editor::prefab::component::material::MaterialPrefab": (
+          base_color: Rgba(
+            red: 1.0,
+            green: 1.0,
+            blue: 1.0,
+            alpha: 1.0,
+          ),
+          base_color_texture: "",
+          emissive: Rgba(
+            red: 0.0,
+            green: 0.0,
+            blue: 0.0,
+            alpha: 1.0,
+          ),
+          emissive_texture: "",
+          perceptual_roughness: 0.5,
+          metallic: 0.0,
+          metallic_roughness_texture: "",
+          reflectance: 0.5,
+          normal_map_texture: "",
+          flip_normal_map_y: false,
+          occlusion_texture: "",
+          double_sided: false,
+          unlit: false,
+          fog_enabled: true,
+          alpha_mode: Opaque,
+          depth_bias: 0.0,
+          depth_map: "",
+          parallax_depth_scale: 0.1,
+          parallax_mapping_method: Occlusion,
+          max_parallax_layer_count: 16.0,
+        ),
+        "space_editor::prefab::component::AssetMesh": (
+          path: "low_poly_fighter_2.glb#Mesh2/Primitive0",
+        ),
+        "space_editor::prefab::save::ChildrenPrefab": ([
+          8,
+          10,
+        ]),
+      },
+    ),
+    8: (
+      components: {
+        "bevy_transform::components::transform::Transform": (
+          translation: (
+            x: 0.6145791,
+            y: 0.054736555,
+            z: 0.14563978,
+          ),
+          rotation: (0.5, 0.5, -0.5, 0.50000006),
+          scale: (
+            x: 1.0,
+            y: 1.0,
+            z: 1.0,
+          ),
+        ),
+        "bevy_render::view::visibility::Visibility": Inherited,
+        "space_editor::prefab::component::material::MaterialPrefab": (
+          base_color: Rgba(
+            red: 1.0,
+            green: 1.0,
+            blue: 1.0,
+            alpha: 1.0,
+          ),
+          base_color_texture: "",
+          emissive: Rgba(
+            red: 0.0,
+            green: 0.0,
+            blue: 0.0,
+            alpha: 1.0,
+          ),
+          emissive_texture: "",
+          perceptual_roughness: 0.5,
+          metallic: 0.0,
+          metallic_roughness_texture: "",
+          reflectance: 0.5,
+          normal_map_texture: "",
+          flip_normal_map_y: false,
+          occlusion_texture: "",
+          double_sided: false,
+          unlit: false,
+          fog_enabled: true,
+          alpha_mode: Opaque,
+          depth_bias: 0.0,
+          depth_map: "",
+          parallax_depth_scale: 0.1,
+          parallax_mapping_method: Occlusion,
+          max_parallax_layer_count: 16.0,
+        ),
+        "space_editor::prefab::component::AssetMesh": (
+          path: "low_poly_fighter_2.glb#Mesh1/Primitive0",
+        ),
+        "space_editor::prefab::save::ChildrenPrefab": ([
+          9,
+        ]),
+      },
+    ),
+    9: (
+      components: {
+        "bevy_transform::components::transform::Transform": (
+          translation: (
+            x: -0.0015763491,
+            y: 0.27077,
+            z: 0.0018413959,
+          ),
+          rotation: (0.0, 0.0, 0.0, 1.0),
+          scale: (
+            x: 1.0,
+            y: 0.0,
+            z: 1.0,
+          ),
+        ),
+        "bevy_render::view::visibility::Visibility": Inherited,
+        "space_editor::prefab::component::AssetMesh": (
+          path: "low_poly_fighter_2.glb#Mesh0/Primitive0",
+        ),
+        "space_editor::prefab::component::AssetMaterial": (
+          path: "low_poly_fighter_2.glb#Material0",
+        ),
+        "frontier_folly::object::thruster_flame::ThrusterFlame": (
+          length: 0.0,
+          scale_ratio: 1.0,
+          max_length: 1.0,
+        ),
+      },
+    ),
+    10: (
+      components: {
+        "bevy_transform::components::transform::Transform": (
+          translation: (
+            x: 0.6125513,
+            y: 0.058001567,
+            z: -0.13519481,
+          ),
+          rotation: (0.5, 0.5, -0.5, 0.50000006),
+          scale: (
+            x: 1.0,
+            y: 1.0,
+            z: 1.0,
+          ),
+        ),
+        "bevy_render::view::visibility::Visibility": Inherited,
+        "space_editor::prefab::component::material::MaterialPrefab": (
+          base_color: Rgba(
+            red: 1.0,
+            green: 1.0,
+            blue: 1.0,
+            alpha: 1.0,
+          ),
+          base_color_texture: "",
+          emissive: Rgba(
+            red: 0.0,
+            green: 0.0,
+            blue: 0.0,
+            alpha: 1.0,
+          ),
+          emissive_texture: "",
+          perceptual_roughness: 0.5,
+          metallic: 0.0,
+          metallic_roughness_texture: "",
+          reflectance: 0.5,
+          normal_map_texture: "",
+          flip_normal_map_y: false,
+          occlusion_texture: "",
+          double_sided: false,
+          unlit: false,
+          fog_enabled: true,
+          alpha_mode: Opaque,
+          depth_bias: 0.0,
+          depth_map: "",
+          parallax_depth_scale: 0.1,
+          parallax_mapping_method: Occlusion,
+          max_parallax_layer_count: 16.0,
+        ),
+        "space_editor::prefab::component::AssetMesh": (
+          path: "low_poly_fighter_2.glb#Mesh1/Primitive0",
+        ),
+        "space_editor::prefab::save::ChildrenPrefab": ([
+          11,
+        ]),
+      },
+    ),
+    11: (
+      components: {
+        "bevy_transform::components::transform::Transform": (
+          translation: (
+            x: 0.0074897856,
+            y: 0.27279782,
+            z: 0.005106408,
+          ),
+          rotation: (0.0, 0.0, 0.0, 1.0),
+          scale: (
+            x: 1.0,
+            y: 0.0,
+            z: 1.0,
+          ),
+        ),
+        "bevy_render::view::visibility::Visibility": Inherited,
+        "space_editor::prefab::component::AssetMesh": (
+          path: "low_poly_fighter_2.glb#Mesh0/Primitive0",
+        ),
+        "space_editor::prefab::component::AssetMaterial": (
+          path: "low_poly_fighter_2.glb#Material0",
+        ),
+        "frontier_folly::object::thruster_flame::ThrusterFlame": (
+          length: 0.0,
+          scale_ratio: 1.0,
+          max_length: 1.0,
+        ),
+      },
+    ),
+  },
+)

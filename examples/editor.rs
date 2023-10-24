@@ -1,13 +1,19 @@
 #![allow(clippy::too_many_arguments, clippy::type_complexity)]
 
+use bevy::core_pipeline::bloom::BloomSettings;
 use bevy::prelude::*;
+use bevy::pbr::CascadeShadowConfigBuilder;
+use frontier_folly::object::ObjectPlugins;
 use space_editor::prelude::*;
+use space_editor::ext::*;
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugins(SpaceEditorPlugin::default())
+        .add_plugins(ObjectPlugins)
         .add_systems(Startup, space_enviroment)
+        .insert_resource(Msaa::Off)
         .run();
 }
 
@@ -17,6 +23,7 @@ fn space_enviroment(mut commands: Commands) {
     commands.spawn(DirectionalLightBundle {
         directional_light: DirectionalLight {
             shadows_enabled: true,
+            illuminance : 5000.0,
             ..default()
         },
         transform: Transform::from_xyz(4.0, 8.0, 4.0).looking_at(Vec3::ZERO, Vec3::Y),
@@ -25,8 +32,8 @@ fn space_enviroment(mut commands: Commands) {
     });
 
     //grid
-    commands.spawn(bevy_infinite_grid::InfiniteGridBundle {
-        grid: bevy_infinite_grid::InfiniteGrid {
+    commands.spawn(InfiniteGridBundle {
+        grid: InfiniteGrid {
             // shadow_color: None,
             ..default()
         },
@@ -37,9 +44,21 @@ fn space_enviroment(mut commands: Commands) {
     commands
         .spawn(Camera3dBundle {
             transform: Transform::from_xyz(-2.0, 2.5, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
+            camera : Camera {
+                hdr : true,
+                ..default()
+            },
+            camera_3d : Camera3d {
+                clear_color: bevy::core_pipeline::clear_color::ClearColorConfig::Custom(
+                    Color::BLACK,
+                ),
+                ..default()
+            },
             ..default()
         })
-        .insert(bevy_panorbit_camera::PanOrbitCamera::default())
-        .insert(bevy_mod_picking::prelude::RaycastPickCamera::default())
+        .insert(BloomSettings::default())
+        .insert(bevy::pbr::ScreenSpaceAmbientOcclusionBundle::default())
+        .insert(PanOrbitCamera::default())
+        .insert(RaycastPickCamera::default())
         .insert(EditorCameraMarker);
 }
