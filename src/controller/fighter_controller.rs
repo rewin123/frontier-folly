@@ -82,6 +82,13 @@ fn smoother_system(
     }
 }
 
+#[derive(Component, Clone, Reflect, Default)]
+#[reflect(Component)]
+pub struct FighterControllerConfig {
+    pub max_speed: f32,
+    pub ramp_up_time : f32
+}
+
 #[derive(Component, Clone, Reflect)]
 #[reflect(Component)]
 pub struct FighterControler {

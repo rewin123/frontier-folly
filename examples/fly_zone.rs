@@ -5,9 +5,10 @@ use big_space::FloatingOrigin;
 use frontier_folly::{
     controller::{ControllerPlugin, FighterControler, ParentSmoother},
     enviroment::sand_cloud::{SandCloudPlugin, SandCloudSpawner},
-    object::{ship::Ship, small_hypergate::SmallHypergatePlugin},
+    object::{ship::Ship, small_hypergate::SmallHypergatePlugin, ObjectPlugins},
     position::SpaceCell,
 };
+use space_editor::prelude::{PrefabPlugin, PrefabBundle, load::PrefabLoader};
 
 const CURSOR_SIZE: f32 = 40.0;
 
@@ -19,9 +20,10 @@ fn main() {
         .add_plugins(
             WorldInspectorPlugin::default().run_if(input_toggle_active(true, KeyCode::Tab)),
         )
+        .add_plugins(PrefabPlugin)
         .add_plugins(bevy::core_pipeline::experimental::taa::TemporalAntiAliasPlugin)
         .add_plugins(ControllerPlugin)
-        .add_plugins(SmallHypergatePlugin)
+        .add_plugins(ObjectPlugins)
         .add_plugins(SandCloudPlugin)
         .add_systems(Startup, setup)
         .add_systems(
@@ -126,11 +128,7 @@ fn setup(
 
     let ship = commands
         .spawn((
-            SceneBundle {
-                scene: assets.load("low_poly_fighter.glb#Scene0"),
-                transform: Transform::default(),
-                ..default()
-            },
+            PrefabBundle::new("test_ship.scn.ron"),
             SpaceCell::default(),
             Name::new("Ship"),
             Ship,
