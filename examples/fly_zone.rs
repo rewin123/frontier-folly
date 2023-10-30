@@ -30,6 +30,7 @@ fn main() {
             Update,
             (
                 apply_velocity,
+                apply_acceleration,
                 ship_controller,
                 enviroment_camera_follow,
                 cursor_pos_system,
@@ -135,6 +136,7 @@ fn setup(
             Ship,
             SandCloudSpawner { ..default() },
             Velocity::default(),
+            ShipAcceleration::default()
         ))
         .id();
 
@@ -199,26 +201,33 @@ fn setup(
 }
 
 fn ship_controller(
-    mut ships: Query<(&mut Velocity, &Transform, &Ship)>,
+    mut ships: Query<(&mut ShipAcceleration, &mut Velocity, &Transform, &Ship)>,
     keys: Res<Input<KeyCode>>,
     time: Res<Time>,
     mut ctxs: EguiContexts,
 ) {
-    let acceleration = 1.0;
+    let acceleration = 9.8 * 4.0;
     let restriction = 0.9;
     let dt = time.delta_seconds();
     egui::Window::new("Ship Controller").show(ctxs.ctx_mut(), |ui| {
-        ships.for_each_mut(|(mut velocity, transform, ship)| {
+        ships.for_each_mut(|(mut a, mut velocity, transform, ship)| {
             let right = transform.right();
 
+            a.0 = Vec3::ZERO;
+
             if keys.pressed(KeyCode::W) {
-                velocity.0 += transform.forward() * acceleration * dt;
+                a.0 += transform.forward() * acceleration;
             }
             if keys.pressed(KeyCode::S) {
-                velocity.0 -= transform.forward() * acceleration * dt;
+                a.0 -= transform.forward() * acceleration;
             }
 
-            if keys.pressed(KeyCode::A) {}
+            if keys.pressed(KeyCode::A) {
+
+            }
+            if keys.pressed(KeyCode::D) {
+
+            }
 
             let vel = velocity.0;
             velocity.0 -= vel * restriction * dt;
@@ -231,21 +240,30 @@ fn ship_controller(
 #[derive(Component, Default)]
 struct Velocity(pub Vec3);
 
-fn apply_velocity(mut query: Query<(&mut Transform, &Velocity)>) {
+#[derive(Component, Default)]
+struct ShipAcceleration(pub Vec3);
+
+fn apply_velocity(mut query: Query<(&mut Transform, &Velocity)>, time : Res<Time>) {
     query.for_each_mut(|(mut transform, velocity)| {
-        transform.translation += velocity.0;
+        transform.translation += velocity.0 * time.delta_seconds();
+    });
+}
+
+fn apply_acceleration(mut query: Query<(&mut Velocity, &ShipAcceleration)>, time : Res<Time>) {
+    query.for_each_mut(|(mut velocity, acceleration)| {
+        velocity.0 += acceleration.0 * time.delta_seconds();
     });
 }
 
 fn change_thruster_flames(
     mut flames : Query<&mut frontier_folly::object::thruster_flame::ThrusterFlame>,
-    mut query: Query<(&mut Transform, &Velocity)>
+    mut query: Query<(&mut Transform, &ShipAcceleration)>
 ) {
-    let (_, vel) = query.single();
+    let (transform, acc) = query.single();
 
-    let vel_length = vel.0.length();
+    let vel_length = acc.0.dot(transform.forward()).max(0.0) / 40.0;
     for mut flame in flames.iter_mut() {
-        flame.length = vel_length;
+        flame.length = 0.95 * flame.length + 0.05 * vel_length;
     }
 }
 
