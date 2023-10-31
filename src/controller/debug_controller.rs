@@ -1,7 +1,6 @@
+use bevy::{input::mouse::MouseMotion, prelude::*};
 
-use bevy::{prelude::*, input::mouse::MouseMotion};
-
-use crate::position::{SpacePosition, SpaceCell};
+use crate::position::{SpaceCell, SpacePosition};
 
 pub struct DebugControllerPlugin;
 
@@ -24,7 +23,7 @@ pub struct DebugController {
 
 impl Default for DebugController {
     fn default() -> Self {
-        Self {  
+        Self {
             enabled: true,
             mouse_rotate_sensitivity: Vec2::splat(0.2),
             translate_sensitivity: 10000.0,
@@ -88,24 +87,30 @@ fn debug_controller_system(
     mut cameras: Query<(&DebugController, &mut Transform)>,
     time: Res<Time>,
 ) {
-
-    let (controller, mut transform) = if let Some((controller, transform)) = cameras.iter_mut().find(|c| c.0.enabled) {
-        (controller, transform)
-    } else {
-        return;
-    };
-
+    let (controller, mut transform) =
+        if let Some((controller, transform)) = cameras.iter_mut().find(|c| c.0.enabled) {
+            (controller, transform)
+        } else {
+            return;
+        };
 
     for event in events.iter() {
         match event {
             DebugControlEvent::Rotate(v) => {
-                let target = transform.translation + transform.forward() + (-transform.up() * v.y * controller.mouse_rotate_sensitivity.x + transform.right() * v.x * controller.mouse_rotate_sensitivity.y) * time.delta_seconds();
+                let target = transform.translation
+                    + transform.forward()
+                    + (-transform.up() * v.y * controller.mouse_rotate_sensitivity.x
+                        + transform.right() * v.x * controller.mouse_rotate_sensitivity.y)
+                        * time.delta_seconds();
                 transform.look_at(target, Vec3::Y);
-            },
+            }
             DebugControlEvent::TranslateEye(v) => {
-                let move_dir = (transform.forward() * v.z + transform.up() * v.y + transform.right() * v.x).normalize_or_zero();
-                transform.translation += move_dir * time.delta_seconds() * controller.translate_sensitivity;
-            },
+                let move_dir =
+                    (transform.forward() * v.z + transform.up() * v.y + transform.right() * v.x)
+                        .normalize_or_zero();
+                transform.translation +=
+                    move_dir * time.delta_seconds() * controller.translate_sensitivity;
+            }
         }
     }
 }

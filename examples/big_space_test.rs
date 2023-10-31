@@ -33,7 +33,7 @@ fn setup(
             ..default()
         },
         SpaceCell::default(), // All spatial entities need this component
-        FloatingOrigin, // Important: marks this as the entity to use as the floating origin
+        FloatingOrigin,       // Important: marks this as the entity to use as the floating origin
         camera::CameraController::default() // Built-in camera controller
             .with_max_speed(1000.0)
             .with_smoothness(0.95, 0.9)
@@ -62,8 +62,9 @@ fn setup(
             material: matl_handle.clone(),
             transform: Transform::from_xyz(10000.0, 0.0, 0.0).with_scale(Vec3::splat(5000.0)),
             ..default()
-        }, 
-        SpaceCell::default()));
+        },
+        SpaceCell::default(),
+    ));
 
     //spawn moon
     commands.spawn((
@@ -73,7 +74,8 @@ fn setup(
             transform: Transform::from_xyz(-5000.0, 0.0, 0.0).with_scale(Vec3::splat(1000.0)),
             ..default()
         },
-        SpaceCell::default()));
+        SpaceCell::default(),
+    ));
 
     // light
     commands.spawn((DirectionalLightBundle {

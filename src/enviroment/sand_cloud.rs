@@ -16,7 +16,6 @@ impl Plugin for SandCloudPlugin {
     }
 }
 
-
 #[derive(Component, Reflect, Default)]
 #[reflect(Component)]
 pub struct SandGrain;
@@ -37,7 +36,7 @@ pub struct SandCloudGlobal {
 
 impl Default for SandCloudSpawner {
     fn default() -> Self {
-        Self { 
+        Self {
             density: 0.0001,
             radius: 160.0,
             check_distance_patience: 1.0,
@@ -46,9 +45,9 @@ impl Default for SandCloudSpawner {
 }
 
 fn setup_global(
-    mut commands : Commands,
-    mut meshes : ResMut<Assets<Mesh>>,
-    mut materials : ResMut<Assets<StandardMaterial>>,
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     let grain_mesh = meshes.add(Mesh::from(shape::Cube { size: 0.1 }));
     let grain_material = materials.add(StandardMaterial {
@@ -63,10 +62,16 @@ fn setup_global(
 }
 
 fn sand_cloud_update(
-    mut commands : Commands,
-    global : Res<SandCloudGlobal>,
-    grains : Query<(Entity, &GlobalTransform, &SandGrain)>,
-    mut spawners : Query<(Entity, &GlobalTransform, &Transform, &SpaceCell, &SandCloudSpawner)>,
+    mut commands: Commands,
+    global: Res<SandCloudGlobal>,
+    grains: Query<(Entity, &GlobalTransform, &SandGrain)>,
+    mut spawners: Query<(
+        Entity,
+        &GlobalTransform,
+        &Transform,
+        &SpaceCell,
+        &SandCloudSpawner,
+    )>,
 ) {
     let (_, spawner_transform, loc_transform, cell, spawner) = spawners.single_mut();
 
@@ -86,12 +91,15 @@ fn sand_cloud_update(
     if grain_count < need_count {
         let mut rng = rand::thread_rng();
         rng.gen_range(0.0..=1.0);
-        for _ in 0..(need_count - grain_count) {          
+        for _ in 0..(need_count - grain_count) {
             let r = Vec3::new(
                 rng.gen_range(-spawner.radius..=spawner.radius),
                 rng.gen_range(-spawner.radius..=spawner.radius),
                 rng.gen_range(-spawner.radius..=spawner.radius),
-            ).normalize_or_zero() * spawner.radius * 0.9;
+            )
+            .normalize_or_zero()
+                * spawner.radius
+                * 0.9;
             commands.spawn((
                 PbrBundle {
                     mesh: global.grain_mesh.clone(),
