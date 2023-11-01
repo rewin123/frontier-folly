@@ -2,7 +2,8 @@ use bevy::prelude::*;
 use big_space::*;
 
 /// Grid type for all game
-pub type SpaceCell = GridCell<i64>;
+pub type SpaceCellPercision = i64;
+pub type SpaceCell = GridCell<SpaceCellPercision>;
 
 #[derive(Reflect, Default, Clone, Copy, Debug, PartialEq)]
 pub struct SpacePosition {

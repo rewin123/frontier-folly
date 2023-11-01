@@ -5,7 +5,7 @@ use big_space::FloatingOrigin;
 use frontier_folly::{
     controller::{ControllerPlugin, FighterControler, ParentSmoother},
     enviroment::sand_cloud::{SandCloudPlugin, SandCloudSpawner},
-    object::{ship::Ship, small_hypergate::SmallHypergatePlugin, ObjectPlugins},
+    object::{ship::Ship, small_hypergate::SmallHypergatePlugin, ObjectPlugins, laser_beam_bullet::{SpawnLaserBeamBullet, LaserBeamBulletSet}},
     position::SpaceCell,
 };
 use space_editor::prelude::{PrefabPlugin, PrefabBundle, load::PrefabLoader};
@@ -31,7 +31,7 @@ fn main() {
             (
                 apply_velocity,
                 apply_acceleration,
-                ship_controller,
+                ship_controller.before(LaserBeamBulletSet),
                 enviroment_camera_follow,
                 cursor_pos_system,
                 update_cursor_visiblity,
@@ -79,7 +79,9 @@ fn setup(
     assets: Res<AssetServer>,
     mut meshs: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    mut gizmo_config : ResMut<GizmoConfig>
 ) {
+
     let cursor_texture = commands.spawn((
         NodeBundle {
             style: Style {
@@ -201,16 +203,26 @@ fn setup(
 }
 
 fn ship_controller(
-    mut ships: Query<(&mut ShipAcceleration, &mut Velocity, &Transform, &Ship)>,
+    mut ships: Query<(&mut ShipAcceleration, &mut Velocity, &Transform, &Ship, &SpaceCell)>,
     keys: Res<Input<KeyCode>>,
     time: Res<Time>,
     mut ctxs: EguiContexts,
+    mut bullets : EventWriter<SpawnLaserBeamBullet>,
+    cameras : Query<(&Camera, &GlobalTransform)>,
+    windows : Query<&Window>,
 ) {
     let acceleration = 9.8 * 4.0;
+    let side_acceleration = 9.8 * 2.0;
     let restriction = 0.9;
     let dt = time.delta_seconds();
+
+    let window = windows.single();
+    let (camera, cam_transform) = cameras.single();
+    let world_cursor = camera.viewport_to_world(cam_transform, window.cursor_position().unwrap_or_default());
+
+
     egui::Window::new("Ship Controller").show(ctxs.ctx_mut(), |ui| {
-        ships.for_each_mut(|(mut a, mut velocity, transform, ship)| {
+        ships.for_each_mut(|(mut a, mut velocity, transform, ship, cell)| {
             let right = transform.right();
 
             a.0 = Vec3::ZERO;
@@ -223,10 +235,39 @@ fn ship_controller(
             }
 
             if keys.pressed(KeyCode::A) {
-
+                a.0 -= right * side_acceleration;
             }
             if keys.pressed(KeyCode::D) {
+                a.0 += right * side_acceleration;
+            }
 
+            if keys.just_pressed(KeyCode::Space) {
+
+                let direction = if let Some(ray) = &world_cursor {
+                    ray.direction
+                } else {
+                    transform.forward()
+                };
+
+                bullets.send(SpawnLaserBeamBullet {
+                    position: transform.translation - transform.right() * 2.1,
+                    cell: *cell,
+                    direction,
+                    length: 10.0,
+                    color: Color::RED * 10.0,
+                    speed: 500.0,
+                    lifetime: 5.0
+                });
+
+                bullets.send(SpawnLaserBeamBullet {
+                    position: transform.translation + transform.right() * 2.1,
+                    cell: *cell,
+                    direction,
+                    length: 10.0,
+                    color: Color::RED * 10.0,
+                    speed: 500.0,
+                    lifetime: 5.0
+                });
             }
 
             let vel = velocity.0;

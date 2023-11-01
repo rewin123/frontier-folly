@@ -62,15 +62,15 @@
       components: {
         "bevy_transform::components::transform::Transform": (
           translation: (
-            x: 0.008977458,
-            y: 0.256024,
-            z: 0.005106408,
+            x: 0.0024896115,
+            y: 0.25602394,
+            z: 0.0011815466,
           ),
-          rotation: (-0.00000016391229, 0.000016748932, -0.00001675032, 1.0),
+          rotation: (-0.0000013560051, 0.00002266525, -0.000022667607, 1.0),
           scale: (
             x: 0.1,
             y: 0.2,
-            z: 0.0999975,
+            z: 0.09999573,
           ),
         ),
         "bevy_render::view::visibility::Visibility": Inherited,

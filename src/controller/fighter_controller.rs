@@ -3,7 +3,7 @@ use bevy::{
     prelude::*,
 };
 
-use crate::object::ship::Ship;
+use crate::{object::ship::Ship, position::{SpaceCell, SpaceCellPercision}};
 
 pub struct FighterControllerPlugin;
 
@@ -18,7 +18,7 @@ impl Plugin for FighterControllerPlugin {
                     fighter_controller_system,
                     smoother_system,
                 )
-                    .chain(),
+                    .chain().before(big_space::recenter_transform_on_grid::<SpaceCellPercision>),
             );
     }
 }
