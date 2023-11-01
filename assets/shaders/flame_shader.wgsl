@@ -66,6 +66,7 @@ fn generateCloudNoise(uv: vec2<f32>) -> f32 {
 }
 
 
+
 @fragment
 fn fragment(
     mesh: MeshVertexOutput,
@@ -74,15 +75,15 @@ fn fragment(
     let tiling = vec2(1.0, 0.05) * 5.0;
     var alpha = generateCloudNoise(mesh.uv * tiling + vec2(0.0, globals.time) * 2.0) + 1.0;
     alpha = alpha / 2.0;
-    alpha = alpha + (duv - 0.5) * 2.5 + 0.3;
+    alpha = alpha + (duv - 0.5) * 4.5 + 0.3;
     alpha = max(0.0, alpha);
     alpha = min(1.0, alpha);
-    alpha = pow(alpha, 4.0);
-    let k = 50.0;
+    alpha = pow(alpha, 2.0);
+    let k = 100.0;
     var rgb = material.color.xyz;
     rgb.r = rgb.r * duv;
     rgb.g = rgb.g;
-    rgb.b = rgb.b + (1.0 - duv) * 0.12;
     rgb = rgb * k * alpha;
-    return vec4(rgb, alpha);
+
+    return vec4(vec3<f32>(rgb), alpha);
 }

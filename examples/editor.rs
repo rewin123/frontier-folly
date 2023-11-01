@@ -9,7 +9,10 @@ use space_editor::ext::*;
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins)
+        .add_plugins(DefaultPlugins.set(AssetPlugin {
+            watch_for_changes: bevy::asset::ChangeWatcher::with_delay(std::time::Duration::from_millis(50)),
+            ..Default::default()
+        }))
         .add_plugins(SpaceEditorPlugin::default())
         .add_plugins(ObjectPlugins)
         .add_systems(Startup, space_enviroment)
