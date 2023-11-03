@@ -5,6 +5,16 @@ use big_space::*;
 pub type SpaceCellPercision = i64;
 pub type SpaceCell = GridCell<SpaceCellPercision>;
 
+pub struct SpacePositionPlugin;
+
+impl Plugin for SpacePositionPlugin {
+    fn build(&self, app: &mut App) {
+        app.register_type::<SpacePosition>()
+            .register_type::<SpaceCell>()
+            .add_plugins((big_space::FloatingOriginPlugin::<SpaceCellPercision>::default(),));
+    }
+}
+
 #[derive(Reflect, Default, Clone, Copy, Debug, PartialEq)]
 pub struct SpacePosition {
     pub cell: SpaceCell,
