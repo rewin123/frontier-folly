@@ -69,9 +69,7 @@ fn setup(
                     },
                     RigidBody::Dynamic,
                     Collider::cuboid(2.0, 2.0, 2.0),
-                    MovementAcceleration(10.0),
                     Position(position + DVec3::Y * 5.0),
-                    LinearVelocity::default(),
                     SpaceCell::default(),
                     Cube,
                 ));
@@ -103,18 +101,19 @@ fn movement(
     keyboard_input: Res<Input<KeyCode>>,
     mut query: Query<&mut LinearVelocity, With<Cube>>,
 ) {
+    let k = 0.15;
     for mut lin_vel in &mut query {
-        if keyboard_input.pressed(KeyCode::Up) {
-            lin_vel.z -= 0.15;
+        if keyboard_input.pressed(KeyCode::W) {
+            lin_vel.z -= k;
         }
-        if keyboard_input.pressed(KeyCode::Down) {
-            lin_vel.z += 0.15;
+        if keyboard_input.pressed(KeyCode::S) {
+            lin_vel.z += k;
         }
-        if keyboard_input.pressed(KeyCode::Left) {
-            lin_vel.x -= 0.15;
+        if keyboard_input.pressed(KeyCode::A) {
+            lin_vel.x -= k;
         }
-        if keyboard_input.pressed(KeyCode::Right) {
-            lin_vel.x += 0.15;
+        if keyboard_input.pressed(KeyCode::D) {
+            lin_vel.x += k;
         }
     }
 }
