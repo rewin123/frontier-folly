@@ -1,7 +1,7 @@
 use bevy::{prelude::*, math::DVec3};
 use bevy_xpbd_3d::{prelude::*, SubstepSet, SubstepSchedule};
 
-use crate::position::SpaceCellPercision;
+use crate::position::{SpaceCellPercision, SpacePosition, SpaceCell};
 
 use super::PhysicsOrigin;
 
@@ -9,17 +9,82 @@ pub struct SyncPlugin;
 
 impl Plugin for SyncPlugin {
     fn build(&self, app: &mut App) {
+
+        app.add_systems(
+            PostUpdate, (
+                init_prev_pos,
+                sync_physics_origin,
+                sync_transforms_to_physics
+        ).chain()
+            .after(PhysicsSet::Prepare)
+            .before(PhysicsSet::StepSimulation));
+
         app.add_systems(
             PostUpdate,
             (
                 fix_origin_to_zero,
-                sync_transforms
+                sync_physics_to_transforms
             ).chain()
             .in_set(PhysicsSet::Sync),
         );
     }
 }
 
+#[derive(Component, Reflect, Clone, Debug, Default)]
+#[reflect(Component)]
+struct PrevSpacePos(SpacePosition);
+
+fn init_prev_pos(
+    mut commands : Commands,
+    mut origins : Query<(Entity, &Transform, &SpaceCell), Without<PrevSpacePos>>
+) {
+    for (entity, transform, cell) in origins.iter() {
+        commands.entity(entity).insert(PrevSpacePos(SpacePosition {
+            cell: *cell,
+            position: transform.translation
+        }));
+    }
+}
+
+fn sync_physics_origin(
+    mut origins : Query<(&Transform, &SpaceCell, &PrevSpacePos), (With<PhysicsOrigin>, Or<(Changed<Transform>, Changed<SpaceCell>)>)>,
+    mut bodies : Query<&mut Position, Without<PhysicsOrigin>>,
+    grid : Res<big_space::FloatingOriginSettings>
+) {
+    let Ok((transform, cell, prev_pos)) = origins.get_single_mut() else {
+        return;
+    };
+
+    let cur_space_pos = SpacePosition {
+        cell: *cell,
+        position: transform.translation
+    };
+    let space_dpos = cur_space_pos - prev_pos.0;
+
+    let dp = grid.grid_position_double(
+        &space_dpos.cell, 
+        &Transform::from_translation(space_dpos.position.clone())
+    );
+
+    for mut body_pos in &mut bodies {
+        body_pos.0 -= dp;
+    }
+}
+
+fn sync_transforms_to_physics(
+    mut bodies : Query<(&mut Position, &mut Rotation, &GlobalTransform), (Changed<GlobalTransform>, Without<PhysicsOrigin>)>,
+    origins : Query<(&GlobalTransform), With<PhysicsOrigin>>
+) {
+    let (origin) = origins.single();
+
+    for (mut body_pos, mut body_rot, global_transform) in &mut bodies {
+        let physics_pos = global_transform.translation() - origin.translation();
+        let dp = physics_pos.as_dvec3() - body_pos.0;
+        body_pos.0 += dp;
+
+        body_rot.0 = global_transform.compute_transform().rotation.as_f64();
+    }
+}
 
 type RbSyncQueryComponents = (
     &'static mut Transform,
@@ -52,7 +117,7 @@ fn fix_origin_to_zero(
     origin_pos.0 = DVec3::ZERO;
 }
 
-fn sync_transforms(
+fn sync_physics_to_transforms(
     mut bodies: Query<RbSyncQueryComponents, RbSyncQueryFilter>,
     parents: Query<RigidBodyParentComponents, With<Children>>,
     origins : Query<(&GlobalTransform), With<PhysicsOrigin>>
