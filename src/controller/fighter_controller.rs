@@ -2,6 +2,7 @@ use bevy::{
     input::mouse::{MouseMotion, MouseWheel},
     prelude::*,
 };
+use bevy_xpbd_3d::PhysicsSet;
 
 use crate::{object::ship::Ship, position::{SpaceCell, SpaceCellPercision}};
 
@@ -18,7 +19,7 @@ impl Plugin for FighterControllerPlugin {
                     fighter_controller_system,
                     smoother_system,
                 )
-                    .chain().before(big_space::recenter_transform_on_grid::<SpaceCellPercision>),
+                    .chain().after(PhysicsSet::Sync),
             );
     }
 }

@@ -1,4 +1,4 @@
-use bevy::{input::common_conditions::input_toggle_active, prelude::*};
+use bevy::{input::common_conditions::input_toggle_active, prelude::*, math::DVec3};
 use bevy_egui::{egui, EguiContexts, EguiPlugin};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use big_space::FloatingOrigin;
@@ -6,9 +6,10 @@ use frontier_folly::{
     controller::{ControllerPlugin, FighterControler, ParentSmoother},
     enviroment::sand_cloud::{SandCloudPlugin, SandCloudSpawner},
     object::{ship::Ship, small_hypergate::SmallHypergatePlugin, ObjectPlugins, laser_beam_bullet::{SpawnLaserBeamBullet, LaserBeamBulletSet}},
-    position::SpaceCell,
+    position::SpaceCell, physics::{SpacePhysicsPlugin, PhysicsOrigin},
 };
 use space_editor::prelude::{PrefabPlugin, PrefabBundle, load::PrefabLoader};
+use bevy_xpbd_3d::prelude::*;
 
 const CURSOR_SIZE: f32 = 40.0;
 
@@ -25,11 +26,12 @@ fn main() {
         .add_plugins(ControllerPlugin)
         .add_plugins(ObjectPlugins)
         .add_plugins(SandCloudPlugin)
+        .add_plugins(SpacePhysicsPlugin)
+        .insert_resource(Gravity(DVec3::ZERO))
         .add_systems(Startup, setup)
         .add_systems(
             Update,
             (
-                apply_velocity,
                 apply_acceleration,
                 ship_controller.before(LaserBeamBulletSet),
                 enviroment_camera_follow,
@@ -137,8 +139,10 @@ fn setup(
             Name::new("Ship"),
             Ship,
             SandCloudSpawner { ..default() },
-            Velocity::default(),
-            ShipAcceleration::default()
+            LinearVelocity::default(),
+            ShipAcceleration::default(),
+            RigidBody::Dynamic,
+            Collider::ball(1.0)
         ))
         .id();
 
@@ -167,6 +171,14 @@ fn setup(
             ..default()
         },
         bevy::pbr::ScreenSpaceAmbientOcclusionBundle::default(),
+    ));
+
+    // physics origin
+    commands.spawn((
+        SpatialBundle::default(),
+        SpaceCell::default(),
+        PhysicsOrigin,
+        Position::default()
     ));
 
     // light
@@ -203,7 +215,7 @@ fn setup(
 }
 
 fn ship_controller(
-    mut ships: Query<(&mut ShipAcceleration, &mut Velocity, &Transform, &Ship, &SpaceCell)>,
+    mut ships: Query<(&mut ShipAcceleration, &mut LinearVelocity, &Transform, &Ship, &SpaceCell)>,
     keys: Res<Input<KeyCode>>,
     time: Res<Time>,
     mut ctxs: EguiContexts,
@@ -271,28 +283,20 @@ fn ship_controller(
             }
 
             let vel = velocity.0;
-            velocity.0 -= vel * restriction * dt;
+            velocity.0 -= vel * restriction * dt as f64;
 
             ui.label(format!("{:.1} km/h", velocity.0.length() * 3600.0 / 1000.0));
         })
     });
 }
 
-#[derive(Component, Default)]
-struct Velocity(pub Vec3);
 
 #[derive(Component, Default)]
 struct ShipAcceleration(pub Vec3);
 
-fn apply_velocity(mut query: Query<(&mut Transform, &Velocity)>, time : Res<Time>) {
-    query.for_each_mut(|(mut transform, velocity)| {
-        transform.translation += velocity.0 * time.delta_seconds();
-    });
-}
-
-fn apply_acceleration(mut query: Query<(&mut Velocity, &ShipAcceleration)>, time : Res<Time>) {
+fn apply_acceleration(mut query: Query<(&mut LinearVelocity, &ShipAcceleration)>, time : Res<Time>) {
     query.for_each_mut(|(mut velocity, acceleration)| {
-        velocity.0 += acceleration.0 * time.delta_seconds();
+        velocity.0 += acceleration.0.as_dvec3() * time.delta_seconds_f64();
     });
 }
 
