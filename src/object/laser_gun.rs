@@ -20,7 +20,6 @@ pub struct LaserGun {
 
     pub beam_color : Color,
     pub beam_brightness : f32,
-    pub beam_length : f32,
     pub beam_speed : f32,
     pub beam_lifetime : f32,
 }
@@ -35,7 +34,6 @@ fn fire_from_laser_gun(
                 position: transform.translation,
                 cell : cell.clone(),
                 direction: transform.forward(),
-                length: laser_gun.beam_length,
                 color: laser_gun.beam_color,
                 speed: laser_gun.beam_speed,
                 lifetime: laser_gun.beam_lifetime,

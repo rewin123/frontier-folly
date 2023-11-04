@@ -28,7 +28,6 @@ pub struct SpawnLaserBeamBullet {
     pub position: Vec3,
     pub cell : SpaceCell,
     pub direction: Vec3,
-    pub length: f32,
     pub color: Color,
     pub speed: f32,
     pub lifetime: f32,
@@ -37,11 +36,11 @@ pub struct SpawnLaserBeamBullet {
 #[derive(Component, Reflect, Default, Debug)]
 #[reflect(Component)]
 pub struct LaserBeamBullet {
-    pub length: f32,
     pub color: Color,
     pub speed: f32,
     pub lifetime: f32,
-    pub max_lifetime: f32
+    pub max_lifetime: f32,
+    pub prev_global_trasform: Option<GlobalTransform>,
 }
 
 fn laser_beam_flying(
@@ -59,9 +58,19 @@ fn laser_beam_flying(
             transform.translation += frw * laser_beam.speed * time.delta_seconds();
             gizmos.line(
                 global_transform.translation(),
-                global_transform.translation() + frw * laser_beam.length,
+                global_transform.translation() + frw * laser_beam.speed * time.delta_seconds(),
                 laser_beam.color * (laser_beam.lifetime / laser_beam.max_lifetime)
             );
+
+            if let Some(prev) = &laser_beam.prev_global_trasform {
+                gizmos.line(
+                    prev.translation(),
+                    global_transform.translation(),
+                    laser_beam.color * (laser_beam.lifetime / laser_beam.max_lifetime)
+                );
+            }
+
+            laser_beam.prev_global_trasform = Some(global_transform.clone());
         }
     }
 }
@@ -73,15 +82,23 @@ fn spawn_laser_beam_bullet(
 ) {
     for event in events.iter() {
         commands.spawn((
-            SpatialBundle::from_transform(Transform::from_translation(event.position).looking_at(event.position + event.direction, Vec3::Y)),
             LaserBeamBullet {
-                length: event.length,
                 color: event.color,
                 speed: event.speed,
                 lifetime: event.lifetime,
-                max_lifetime: event.lifetime
+                max_lifetime: event.lifetime,
+                prev_global_trasform: None,
             },
-            event.cell.clone()
+            event.cell.clone(),
+            PointLightBundle {
+                transform : Transform::from_translation(event.position).looking_at(event.position + event.direction, Vec3::Y),
+                point_light: PointLight {
+                    color: event.color,
+                    intensity: 1.0,
+                    ..default()
+                },
+                ..default()
+            }
         ));
     }
 }

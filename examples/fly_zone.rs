@@ -265,7 +265,6 @@ fn ship_controller(
                     position: transform.translation - transform.right() * 2.1,
                     cell: *cell,
                     direction,
-                    length: 10.0,
                     color: Color::RED * 10.0,
                     speed: 500.0,
                     lifetime: 5.0
@@ -275,7 +274,6 @@ fn ship_controller(
                     position: transform.translation + transform.right() * 2.1,
                     cell: *cell,
                     direction,
-                    length: 10.0,
                     color: Color::RED * 10.0,
                     speed: 500.0,
                     lifetime: 5.0
